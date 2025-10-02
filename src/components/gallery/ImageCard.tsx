@@ -39,7 +39,7 @@ export function ImageCard({ image, onClick, onDelete, className }: ImageCardProp
         ) : (
           <img
             src={image.s3Url}
-            alt={image.title}
+            alt={image.title || image.originalName}
             className={cn(
               'w-full h-full object-cover transition-transform duration-300 group-hover:scale-105',
               !imageLoaded && 'opacity-0'
@@ -80,7 +80,7 @@ export function ImageCard({ image, onClick, onDelete, className }: ImageCardProp
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (window.confirm(`Are you sure you want to delete "${image.title}"?`)) {
+                      if (window.confirm(`Are you sure you want to delete "${image.title || image.originalName}"?`)) {
                         onDelete(image.id);
                       }
                     }}
@@ -99,11 +99,13 @@ export function ImageCard({ image, onClick, onDelete, className }: ImageCardProp
       {/* Content */}
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 truncate mb-1">
-          {image.title}
+          {image.title || image.originalName}
         </h3>
-        <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-          {image.description}
-        </p>
+        {image.description && (
+          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+            {image.description}
+          </p>
+        )}
         
         {/* Metadata */}
         <div className="flex items-center justify-between text-xs text-gray-500">

@@ -1,14 +1,14 @@
 export interface Image {
   id: string;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   originalName: string;
   mimeType: string;
   size: number;
   width?: number;
   height?: number;
-  s3Key: string;
-  s3Url: string;
+  s3Key?: string;
+  s3Url?: string;
   status: ImageStatus;
   createdAt: string;
   updatedAt: string;
@@ -30,8 +30,8 @@ export interface ImagesResponse {
 }
 
 export interface CreateImageDto {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   file: File;
 }
 

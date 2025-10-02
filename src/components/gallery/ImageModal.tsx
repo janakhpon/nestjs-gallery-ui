@@ -66,11 +66,13 @@ export function ImageModal({ image, onClose }: ImageModalProps) {
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-semibold text-gray-900 truncate">
-                {image.title}
+                {image.title || image.originalName}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {image.description}
-              </p>
+              {image.description && (
+                <p className="text-sm text-gray-600 mt-1">
+                  {image.description}
+                </p>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -98,7 +100,7 @@ export function ImageModal({ image, onClose }: ImageModalProps) {
               ) : (
                 <img
                   src={image.s3Url}
-                  alt={image.title}
+                  alt={image.title || image.originalName}
                   className={`max-w-full max-h-full object-contain rounded-lg shadow-lg transition-opacity duration-300 ${
                     !imageLoaded ? 'opacity-0' : ''
                   }`}

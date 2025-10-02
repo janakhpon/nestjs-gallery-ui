@@ -91,8 +91,8 @@ export const api = {
     upload: async (data: CreateImageDto): Promise<ImageUploadResponse> => {
       const formData = new FormData();
       formData.append('file', data.file);
-      formData.append('title', data.title);
-      formData.append('description', data.description);
+      if (data.title) formData.append('title', data.title);
+      if (data.description) formData.append('description', data.description);
 
       const response: AxiosResponse<ImageUploadResponse> = await apiClient.post('/images', formData, {
         headers: {
