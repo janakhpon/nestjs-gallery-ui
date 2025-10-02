@@ -2,9 +2,6 @@
 
 import React, { useState } from 'react';
 import { useImages } from '@/hooks/useImages';
-import { useInfiniteImages } from '@/hooks/useInfiniteImages';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { ImageCard } from './ImageCard';
 import { ImageModal } from './ImageModal';
 import { Pagination } from './Pagination';
@@ -22,36 +19,9 @@ export function ImageGrid({ className }: ImageGridProps) {
   const [page, setPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
   const limit = 6;
-  const isMobile = useIsMobile();
 
-  // Use different hooks based on device type
   const { data, isLoading, error } = useImages(page, limit);
-  const {
-    data: infiniteData,
-    isLoading: infiniteLoading,
-    error: infiniteError,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteImages(limit);
-  
   const queryClient = useQueryClient();
-
-  // Use infinite scroll hook for mobile
-  const { loadMoreRef } = useInfiniteScroll({
-    hasNextPage: hasNextPage || false,
-    isFetchingNextPage: isFetchingNextPage || false,
-    fetchNextPage: fetchNextPage,
-  });
-
-  // Flatten infinite data for mobile
-  const allImages = isMobile && infiniteData 
-    ? infiniteData.pages.flatMap(page => page.images)
-    : data?.images || [];
-
-  const currentData = isMobile ? infiniteData : data;
-  const currentLoading = isMobile ? infiniteLoading : isLoading;
-  const currentError = isMobile ? infiniteError : error;
 
   const handleImageClick = (image: Image) => {
     setSelectedImage(image);
@@ -80,7 +50,7 @@ export function ImageGrid({ className }: ImageGridProps) {
     }
   };
 
-  if (currentLoading) {
+  if (isLoading) {
     return (
       <div className={`space-y-6 ${className || ''}`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -99,7 +69,7 @@ export function ImageGrid({ className }: ImageGridProps) {
     );
   }
 
-  if (currentError) {
+  if (error) {
     return (
       <div className={`text-center py-12 ${className || ''}`}>
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
@@ -119,7 +89,7 @@ export function ImageGrid({ className }: ImageGridProps) {
     );
   }
 
-  if (!allImages || allImages.length === 0) {
+  if (!data?.images || data.images.length === 0) {
     return (
       <div className={`text-center py-12 ${className || ''}`}>
         <ImageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -137,7 +107,7 @@ export function ImageGrid({ className }: ImageGridProps) {
     <div className={`space-y-4 sm:space-y-6 ${className || ''}`}>
       {/* Image Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-        {allImages.map((image) => (
+        {data.images.map((image) => (
           <ImageCard
             key={image.id}
             image={image}
@@ -147,8 +117,8 @@ export function ImageGrid({ className }: ImageGridProps) {
         ))}
       </div>
 
-      {/* Pagination (Desktop) / Infinite Scroll (Mobile) */}
-      {!isMobile && data && data.totalPages && data.totalPages > 1 && (
+      {/* Pagination */}
+      {data && data.totalPages && data.totalPages > 1 && (
         <div className="px-4 sm:px-0">
           <Pagination
             currentPage={page}
@@ -157,32 +127,6 @@ export function ImageGrid({ className }: ImageGridProps) {
             totalItems={data.total || 0}
             itemsPerPage={limit}
           />
-        </div>
-      )}
-
-      {/* Infinite Scroll Load More (Mobile) */}
-      {isMobile && (
-        <div className="px-4 sm:px-0">
-          {/* Load more trigger */}
-          <div ref={loadMoreRef} className="h-4" />
-          
-          {/* Loading indicator */}
-          {isFetchingNextPage && (
-            <div className="flex justify-center py-8">
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Loading more images...</span>
-              </div>
-            </div>
-          )}
-          
-          {/* End of results */}
-          {!hasNextPage && allImages.length > 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <p>You've reached the end! 🎉</p>
-              <p className="text-sm mt-1">All {allImages.length} images loaded</p>
-            </div>
-          )}
         </div>
       )}
 

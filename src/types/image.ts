@@ -45,3 +45,4 @@ export interface ImageUploadResponse {
   message: string;
   status: ImageStatus;
 }
+

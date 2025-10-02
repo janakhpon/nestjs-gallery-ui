@@ -128,6 +128,8 @@ export const api = {
       const response: AxiosResponse<{ downloadUrl: string }> = await apiClient.get(`/images/${id}/download`);
       return response.data;
     },
+
+    // Search images
   },
 
   // MCP Chat API

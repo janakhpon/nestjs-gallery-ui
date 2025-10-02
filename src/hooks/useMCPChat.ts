@@ -80,6 +80,16 @@ export function useMCPChat() {
     }
   }, [sendMessage]);
 
+  const searchImages = useCallback(async (query: string): Promise<ChatResponse> => {
+    try {
+      const searchMessage = `Search for images: ${query}`;
+      const response = await sendMessage(searchMessage);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }, [sendMessage]);
+
   const testConnection = useCallback(async () => {
     try {
       const response = await api.mcp.sendMessage({ message: 'test', context: {} });
@@ -94,6 +104,7 @@ export function useMCPChat() {
   return {
     sendMessage,
     uploadImageViaChat,
+    searchImages,
     testConnection,
     isConnected,
     isLoading: sendMessageMutation.isPending,
