@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { NotificationMessage } from '@/types/chat';
+// NotificationMessage is used but not imported correctly? No, it's not used.
 import toast from 'react-hot-toast';
 
 export function useNotifications() {
@@ -13,6 +13,92 @@ export function useNotifications() {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const maxReconnectAttempts = 5;
+
+  const getStatusEmoji = (status: string | undefined): string => {
+    if (!status) return '❓';
+
+    switch (status.toLowerCase()) {
+      case 'ready':
+        return '✅';
+      case 'failed':
+        return '❌';
+      case 'processing':
+        return '⚙️';
+      case 'pending':
+        return '⏳';
+      case 'uploaded':
+        return '📤';
+      case 'deleted':
+        return '🗑️';
+      default:
+        return '📷';
+    }
+  };
+
+  const handleNotification = useCallback((notification: {
+    imageId?: string;
+    status?: string;
+    title?: string;
+    message?: string;
+    type?: string;
+  }) => {
+    // Handle connection confirmation message
+    if (notification.type === 'connection') {
+      console.log('[SSE] Connection confirmed:', notification.message);
+      setIsConnected(true);
+      setConnectionAttempts(0);
+      return;
+    }
+
+    // Handle backend ImageNotification format
+    if (notification.imageId && notification.status) {
+      const statusEmoji = getStatusEmoji(notification.status);
+      const title = notification.title || 'Image';
+
+      let message: string;
+      let toastType: 'success' | 'error' | 'default' = 'default';
+
+      switch (notification.status) {
+        case 'READY':
+          message = `${statusEmoji} ${title} is ready!`;
+          toastType = 'success';
+          break;
+        case 'FAILED':
+          message = `${statusEmoji} ${title} processing failed`;
+          toastType = 'error';
+          break;
+        case 'UPLOADED':
+          message = `${statusEmoji} ${title} uploaded successfully`;
+          toastType = 'success';
+          break;
+        case 'DELETED':
+          message = `${statusEmoji} ${title} deleted`;
+          toastType = 'default';
+          break;
+        default:
+          message = `${statusEmoji} ${title}: ${notification.status}`;
+          toastType = 'default';
+      }
+
+      if (toastType === 'success') {
+        toast.success(message);
+      } else if (toastType === 'error') {
+        toast.error(message);
+      } else {
+        toast(message);
+      }
+
+      // Invalidate and refetch images
+      queryClient.invalidateQueries({ queryKey: ['images'] });
+
+      // Update specific image if we have the ID
+      if (notification.imageId) {
+        queryClient.invalidateQueries({
+          queryKey: ['images', notification.imageId]
+        });
+      }
+    }
+  }, [queryClient]);
 
   const connectToNotifications = useCallback(() => {
     // Clear any existing connection
@@ -30,7 +116,7 @@ export function useNotifications() {
     try {
       const streamUrl = api.notifications.getStreamUrl();
       console.log(`[SSE] Attempting connection ${connectionAttempts + 1}/${maxReconnectAttempts} to:`, streamUrl);
-      
+
       const eventSource = new EventSource(streamUrl);
       eventSourceRef.current = eventSource;
 
@@ -39,7 +125,7 @@ export function useNotifications() {
         console.log('[SSE] Connection opened successfully');
         setIsConnected(true);
         setConnectionAttempts(0);
-        
+
         // Send a test message to verify connection
         setTimeout(() => {
           if (eventSource.readyState === EventSource.OPEN) {
@@ -53,17 +139,6 @@ export function useNotifications() {
         console.log('[SSE] Message received:', event.data);
         try {
           const data = JSON.parse(event.data);
-          console.log('[SSE] Parsed data:', data);
-          
-          // Handle connection confirmation message
-          if (data.type === 'connection') {
-            console.log('[SSE] Connection confirmed:', data.message);
-            setIsConnected(true);
-            setConnectionAttempts(0);
-            return;
-          }
-          
-          // Handle image notifications
           handleNotification(data);
         } catch (error) {
           console.error('[SSE] Failed to parse message:', error);
@@ -74,25 +149,25 @@ export function useNotifications() {
       eventSource.onerror = (error) => {
         console.error('[SSE] Connection error:', error);
         setIsConnected(false);
-        
+
         // Close current connection
         if (eventSourceRef.current) {
           eventSourceRef.current.close();
           eventSourceRef.current = null;
         }
-        
+
         // Attempt reconnection with exponential backoff
         const newAttempts = connectionAttempts + 1;
         setConnectionAttempts(newAttempts);
-        
+
         if (newAttempts < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, newAttempts), 10000); // Max 10 seconds
           console.log(`[SSE] Reconnecting in ${delay}ms (attempt ${newAttempts}/${maxReconnectAttempts})`);
-          
+
           reconnectTimeoutRef.current = setTimeout(() => {
             connectToNotifications();
           }, delay);
-          
+
           if (newAttempts === 1) {
             toast.error('Connection lost. Reconnecting...');
           }
@@ -106,15 +181,15 @@ export function useNotifications() {
     } catch (error) {
       console.error('[SSE] Failed to create connection:', error);
       setIsConnected(false);
-      
+
       // Attempt reconnection after error
       const newAttempts = connectionAttempts + 1;
       setConnectionAttempts(newAttempts);
-      
+
       if (newAttempts < maxReconnectAttempts) {
         const delay = Math.min(1000 * Math.pow(2, newAttempts), 10000);
         console.log(`[SSE] Retrying connection in ${delay}ms (attempt ${newAttempts}/${maxReconnectAttempts})`);
-        
+
         reconnectTimeoutRef.current = setTimeout(() => {
           connectToNotifications();
         }, delay);
@@ -123,90 +198,19 @@ export function useNotifications() {
         toast.error('Failed to connect to notifications. Please refresh the page.');
       }
     }
-  }, [connectionAttempts, maxReconnectAttempts]);
-
-    const handleNotification = (notification: any) => {
-      // Handle backend ImageNotification format
-      if (notification.imageId && notification.status) {
-        const statusEmoji = getStatusEmoji(notification.status);
-        const title = notification.title || 'Image';
-        
-        let message: string;
-        let toastType: 'success' | 'error' | 'default' = 'default';
-        
-        switch (notification.status) {
-          case 'READY':
-            message = `${statusEmoji} ${title} is ready!`;
-            toastType = 'success';
-            break;
-          case 'FAILED':
-            message = `${statusEmoji} ${title} processing failed`;
-            toastType = 'error';
-            break;
-          case 'UPLOADED':
-            message = `${statusEmoji} ${title} uploaded successfully`;
-            toastType = 'success';
-            break;
-          case 'DELETED':
-            message = `${statusEmoji} ${title} deleted`;
-            toastType = 'default';
-            break;
-          default:
-            message = `${statusEmoji} ${title}: ${notification.status}`;
-            toastType = 'default';
-        }
-        
-        if (toastType === 'success') {
-          toast.success(message);
-        } else if (toastType === 'error') {
-          toast.error(message);
-        } else {
-          toast(message);
-        }
-
-        // Invalidate and refetch images
-        queryClient.invalidateQueries({ queryKey: ['images'] });
-        
-        // Update specific image if we have the ID
-        if (notification.imageId) {
-          queryClient.invalidateQueries({ 
-            queryKey: ['images', notification.imageId] 
-          });
-        }
-      }
-    };
-
-    const getStatusEmoji = (status: string | undefined): string => {
-      if (!status) return '❓';
-      
-      switch (status.toLowerCase()) {
-        case 'ready':
-          return '✅';
-        case 'failed':
-          return '❌';
-        case 'processing':
-          return '⚙️';
-        case 'pending':
-          return '⏳';
-        case 'uploaded':
-          return '📤';
-        case 'deleted':
-          return '🗑️';
-        default:
-          return '📷';
-      }
-    };
+  }, [connectionAttempts, handleNotification]);
 
   useEffect(() => {
     // Start connection
     connectToNotifications();
+    // ... rest of the hook (omitted for brevity in replacement but included in full file)
 
     // Set up periodic connection status check
     const statusCheckInterval = setInterval(() => {
       if (eventSourceRef.current) {
         const readyState = eventSourceRef.current.readyState;
         console.log('[SSE] Status check - readyState:', readyState);
-        
+
         if (readyState === EventSource.OPEN) {
           setIsConnected(true);
         } else if (readyState === EventSource.CLOSED) {
@@ -226,17 +230,17 @@ export function useNotifications() {
     return () => {
       console.log('[SSE] Cleaning up connection');
       clearInterval(statusCheckInterval);
-      
+
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      
+
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
-      
+
       setIsConnected(false);
     };
   }, [connectToNotifications, connectionAttempts, maxReconnectAttempts]);

@@ -10,12 +10,12 @@
     "update-api-types": "./scripts/update-api-types.sh"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "@tanstack/react-query": "^5.0.0",
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
     "lucide-react": "^0.400.0",
-    "next": "15.5.4",
+    "next": "^15.5.9",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.4.0"

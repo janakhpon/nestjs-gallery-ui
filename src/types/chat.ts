@@ -6,7 +6,7 @@ export interface ChatMessage {
   metadata?: {
     imageId?: string;
     action?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -15,7 +15,7 @@ export interface ChatResponse {
   metadata?: {
     imageId?: string;
     action?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

@@ -1,127 +1,125 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Image } from '@/types/image';
-import { formatFileSize, formatRelativeTime, getImageStatusColor, getImageStatusIcon, cn } from '@/lib/utils';
-import { Eye, Download, Calendar, FileText, Trash2 } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import { Image as ImageType } from "@/types/image";
+import { formatFileSize, formatRelativeTime, cn } from "@/lib/utils";
+import { Eye, Trash2 } from "lucide-react";
 
 interface ImageCardProps {
-  image: Image;
+  image: ImageType;
   onClick: () => void;
   onDelete?: (imageId: string) => void;
   className?: string;
 }
 
-export function ImageCard({ image, onClick, onDelete, className }: ImageCardProps) {
+export function ImageCard({
+  image,
+  onClick,
+  onDelete,
+  className,
+}: ImageCardProps) {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
 
   return (
     <div
-      className={`group relative bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer ${className || ''}`}
+      className={cn(
+        "group relative bg-white rounded-xl overflow-hidden cursor-pointer transition-all duration-300",
+        "border border-gray-100 hover:border-gray-200",
+        "shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]",
+        className
+      )}
       onClick={onClick}
     >
-      {/* Image Container */}
-      <div className="aspect-square relative overflow-hidden bg-gray-100">
+      {/* Image Aspect Ratio Container */}
+      <div className="aspect-[4/3] relative overflow-hidden bg-gray-50">
         {!imageLoaded && !imageError && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="w-5 h-5 border-2 border-gray-200 border-t-black/60 rounded-full animate-spin"></div>
           </div>
         )}
-        
-        {imageError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="text-center text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-2" />
-              <p className="text-sm">Failed to load</p>
+
+        {imageError ||
+        (!image.s3Url &&
+          image.status !== "PENDING" &&
+          image.status !== "PROCESSING") ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-300">
+            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+              <span className="text-xl">!</span>
             </div>
+            <p className="text-[10px] font-medium uppercase tracking-wider">
+              Failed to load
+            </p>
           </div>
         ) : (
-          <img
-            src={image.s3Url}
-            alt={image.title || image.originalName}
-            className={cn(
-              'w-full h-full object-cover transition-transform duration-300 group-hover:scale-105',
-              !imageLoaded && 'opacity-0'
-            )}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageError(true)}
-          />
+          image.s3Url && (
+            <Image
+              src={image.s3Url}
+              alt={image.title || image.originalName}
+              fill
+              unoptimized
+              className={cn(
+                "object-cover transition-transform duration-700 ease-out will-change-transform",
+                "group-hover:scale-105",
+                !imageLoaded && "opacity-0"
+              )}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+          )
         )}
 
-        {/* Status Badge */}
-        <div className="absolute top-2 right-2">
-          <span
-            className={cn(
-              'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
-              getImageStatusColor(image.status)
-            )}
-          >
-            <span className="mr-1">{getImageStatusIcon(image.status)}</span>
-            {image.status}
-          </span>
-        </div>
-
-        {/* Overlay on Hover */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="flex flex-col space-y-2">
-              <div className="flex space-x-2">
-                <div className="bg-white bg-opacity-90 rounded-full p-2">
-                  <Eye className="w-4 h-4 text-gray-700" />
-                </div>
-                <div className="bg-white bg-opacity-90 rounded-full p-2">
-                  <Download className="w-4 h-4 text-gray-700" />
-                </div>
-              </div>
-              {/* Delete Button */}
-              {onDelete && (
-                <div className="flex justify-center">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(`Are you sure you want to delete "${image.title || image.originalName}"?`)) {
-                        onDelete(image.id);
-                      }
-                    }}
-                    className="bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors duration-200 shadow-lg"
-                    title="Delete image"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+        {/* Status Badge - Minimalist Dot */}
+        {image.status !== "READY" && (
+          <div className="absolute top-3 right-3">
+            <span
+              className={cn(
+                "inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-md",
+                image.status === "FAILED"
+                  ? "bg-red-500/90 text-white"
+                  : "bg-gray-500/90 text-white"
               )}
-            </div>
+            >
+              {image.status}
+            </span>
+          </div>
+        )}
+
+        {/* Hover Overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <div className="flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+            <button className="bg-white/90 hover:bg-white text-gray-900 p-2.5 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 backdrop-blur-sm">
+              <Eye className="w-4 h-4" />
+            </button>
+            {onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm("Delete image?")) onDelete(image.id);
+                }}
+                className="bg-white/90 hover:bg-red-50 text-red-500 hover:text-red-600 p-2.5 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 backdrop-blur-sm"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Card Content - Clean Typography */}
       <div className="p-4">
-        <h3 className="font-semibold text-gray-900 truncate mb-1">
+        <h3
+          className="font-medium text-gray-900 truncate text-sm mb-1.5"
+          title={image.title || image.originalName}
+        >
           {image.title || image.originalName}
         </h3>
-        {image.description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-            {image.description}
-          </p>
-        )}
-        
-        {/* Metadata */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center space-x-1">
-            <Calendar className="w-3 h-3" />
-            <span>{formatRelativeTime(image.createdAt)}</span>
-          </div>
-          <span>{formatFileSize(image.size)}</span>
-        </div>
 
-        {/* Dimensions */}
-        {image.width && image.height && (
-          <div className="mt-2 text-xs text-gray-500">
-            {image.width} × {image.height}
-          </div>
-        )}
+        <div className="flex items-center justify-between text-[11px] text-gray-400 font-medium">
+          <span>{formatFileSize(image.size)}</span>
+          <span>{formatRelativeTime(image.createdAt)}</span>
+        </div>
       </div>
     </div>
   );

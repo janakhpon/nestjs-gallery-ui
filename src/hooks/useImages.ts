@@ -10,25 +10,43 @@ export function useImages(page: number = 1, limit: number = 12) {
     queryKey: ['images', page, limit],
     queryFn: () => api.images.getAll({ page, limit }),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    keepPreviousData: true,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    // Provide fallback data structure
-    placeholderData: {
-      images: [],
-      total: 0,
-      page: 1,
-      limit: 12,
-      totalPages: 0,
+    // Poll every 3 seconds if any image is processing
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data?.images) return false;
+      const hasPending = data.images.some(
+        (image: Image) =>
+          image.status === "PENDING" || image.status === "PROCESSING"
+      );
+      return hasPending ? 3000 : false;
     },
+    // Provide fallback data structure
+    placeholderData: (previousData) =>
+      previousData || {
+        images: [] as Image[],
+        total: 0,
+        page: 1,
+        limit: 12,
+        totalPages: 0,
+      },
   });
 }
 
 export function useImage(id: string) {
   return useQuery({
-    queryKey: ['images', id],
+    queryKey: ["images", id],
     queryFn: () => api.images.getById(id),
     enabled: !!id,
+    // Poll every 3 seconds if image is processing
+    refetchInterval: (query) => {
+      const image = query.state.data as Image | undefined;
+      if (!image) return false;
+      return image.status === "PENDING" || image.status === "PROCESSING"
+        ? 3000
+        : false;
+    },
   });
 }
 
@@ -37,13 +55,14 @@ export function useUploadImage() {
 
   return useMutation({
     mutationFn: (data: CreateImageDto) => api.images.upload(data),
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Image uploaded successfully!');
       // Invalidate and refetch images
       queryClient.invalidateQueries({ queryKey: ['images'] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to upload image');
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Failed to upload image');
     },
   });
 }
@@ -61,8 +80,9 @@ export function useUpdateImage() {
       // Invalidate images list to refetch
       queryClient.invalidateQueries({ queryKey: ['images'] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update image');
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Failed to update image');
     },
   });
 }
@@ -79,8 +99,9 @@ export function useDeleteImage() {
       // Invalidate images list to refetch
       queryClient.invalidateQueries({ queryKey: ['images'] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete image');
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Failed to delete image');
     },
   });
 }

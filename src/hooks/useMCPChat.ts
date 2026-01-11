@@ -14,7 +14,7 @@ export function useMCPChat() {
     onSuccess: () => {
       setIsConnected(true);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Log errors in development only
       if (process.env.NODE_ENV === 'development') {
         console.error('MCP message failed:', error);
@@ -50,11 +50,11 @@ export function useMCPChat() {
 
       // Upload the image using the FormData upload endpoint
       const uploadResponse = await api.images.uploadFormData(formData);
-      
+
       // Send a confirmation message to the chat
-      const message = `Image uploaded successfully! Title: "${title}", Description: "${description}"`;
+      const message = `I've just uploaded an image named "${file.name}" with the title "${title}". Description: "${description}". Please acknowledge this upload.`;
       const chatResponse = await sendMessage(message);
-      
+
       return {
         ...chatResponse,
         metadata: {
@@ -63,19 +63,20 @@ export function useMCPChat() {
           action: 'image_uploaded'
         }
       };
-    } catch (error: any) {
-      console.error('Failed to upload image via chat:', error);
-      
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+      console.error('Failed to upload image via chat:', axiosError);
+
       // Extract meaningful error message
       let errorMessage = 'Unknown error occurred';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (axiosError.response?.data?.message) {
+        errorMessage = axiosError.response.data.message;
+      } else if (axiosError.message) {
+        errorMessage = axiosError.message;
       }
-      
+
       const chatErrorMessage = `Failed to upload image: ${errorMessage}`;
-      const errorResponse = await sendMessage(chatErrorMessage);
+      await sendMessage(chatErrorMessage);
       throw error;
     }
   }, [sendMessage]);
