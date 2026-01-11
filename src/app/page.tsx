@@ -1,74 +1,75 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Toaster } from 'react-hot-toast';
-import { ImageGrid } from '@/components/gallery/ImageGrid';
-import { ChatBot } from '@/components/chat/ChatBot';
-import { useNotifications } from '@/hooks/useNotifications';
-import { MessageCircle, Grid3X3, Wifi, WifiOff } from 'lucide-react';
+import React, { useState } from "react";
+import { Toaster } from "react-hot-toast";
+import { ImageGrid } from "@/components/gallery/ImageGrid";
+import { UploadButton } from "@/components/gallery/UploadButton";
+import { ChatBot } from "@/components/chat/ChatBot";
+import { useNotifications } from "@/hooks/useNotifications";
+import { MessageCircle, Grid3X3 } from "lucide-react";
 
 export default function GalleryPage() {
   const [showChat, setShowChat] = useState(false);
-  
+
   // Real-time notifications
-  const { isConnected, connectionAttempts, testConnection } = useNotifications();
+  const { isConnected, testConnection } = useNotifications();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fafafa]">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16 sm:h-20">
             {/* Logo and Title */}
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Grid3X3 className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-black rounded-xl flex items-center justify-center shadow-sm hover:scale-105 transition-transform duration-300">
+                <Grid3X3 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Gallery</h1>
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-900">
+                Gallery
+              </h1>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center space-x-3">
-              {/* Connection Status */}
-              <div className="flex items-center space-x-2 text-sm">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              {/* Connection Status - Mobile: Dot only, Desktop: Full badge */}
+              <div className="flex items-center">
                 {isConnected ? (
-                  <div className="flex items-center text-green-600">
-                    <Wifi className="w-4 h-4 mr-1" />
-                    <span>Connected</span>
+                  <div className="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-green-100">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse" />
+                    <span className="hidden sm:inline">System Live</span>
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center text-red-600">
-                      <WifiOff className="w-4 h-4 mr-1" />
-                      <span>Disconnected</span>
-                    </div>
-                    {connectionAttempts > 0 && (
-                      <span className="text-xs text-gray-500">
-                        ({connectionAttempts}/5)
-                      </span>
-                    )}
-                    <button
-                      onClick={testConnection}
-                      className="text-xs text-blue-600 hover:text-blue-800 underline"
-                      title="Test connection"
-                    >
-                      Retry
-                    </button>
-                  </div>
+                  <button
+                    onClick={testConnection}
+                    className="flex items-center text-xs font-medium text-gray-500 bg-gray-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5" />
+                    <span className="hidden sm:inline">Offline</span>
+                    <span className="sm:hidden">Retry</span>
+                  </button>
                 )}
               </div>
 
-              {/* Chat Toggle */}
+              <div className="h-6 w-px bg-gray-200 mx-2 hidden sm:block" />
+
+              {/* Upload Button */}
+              <UploadButton />
+
+              {/* Chat Toggle - Icon on mobile, Button on desktop */}
               <button
                 onClick={() => setShowChat(!showChat)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  showChat 
-                    ? 'bg-gray-600 text-white hover:bg-gray-700' 
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                className={`flex items-center justify-center p-2.5 sm:px-5 sm:py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-sm border ${
+                  showChat
+                    ? "bg-gray-100 text-gray-900 border-gray-200 hover:bg-gray-200"
+                    : "bg-white text-gray-900 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                 }`}
+                aria-label="Toggle Assistant"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>{showChat ? 'Hide Chat' : 'Open Chat'}</span>
+                <MessageCircle className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
+                <span className="hidden sm:inline">
+                  {showChat ? "Close" : "Assistant"}
+                </span>
               </button>
             </div>
           </div>
@@ -76,20 +77,46 @@ export default function GalleryPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Image Grid */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 min-h-screen">
         <ImageGrid />
       </main>
 
       {/* Chat Bot */}
       {showChat && (
-        <div className="fixed bottom-4 right-4 w-96 h-[600px] z-50">
-          <ChatBot onClose={() => setShowChat(false)} />
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          {/* Mobile Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm sm:hidden"
+            onClick={() => setShowChat(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 top-12 sm:top-auto sm:relative sm:w-[400px] sm:h-[600px] bg-white sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <ChatBot onClose={() => setShowChat(false)} />
+          </div>
         </div>
       )}
 
       {/* Toast Notifications */}
-      <Toaster position="top-right" />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          className: "text-sm font-medium text-gray-900",
+          style: {
+            background: "white",
+            border: "1px solid #E5E7EB",
+            padding: "12px 16px",
+            color: "#111827",
+            borderRadius: "12px",
+            boxShadow:
+              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#10B981",
+              secondary: "white",
+            },
+          },
+        }}
+      />
     </div>
   );
 }

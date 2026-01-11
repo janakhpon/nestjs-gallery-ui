@@ -61,11 +61,7 @@ export const api = {
           limit: params.limit || 12,
           totalPages: 0,
         };
-      } catch (error) {
-        // Log errors in development only
-        if (process.env.NODE_ENV === 'development') {
-          console.error('API: Error fetching images:', error);
-        }
+      } catch {
         // Return fallback data on error
         return {
           images: [],
@@ -155,8 +151,8 @@ export const api = {
     },
 
     // Get recent notifications
-    getRecent: async (): Promise<any[]> => {
-      const response: AxiosResponse<any[]> = await apiClient.get('/notifications');
+    getRecent: async (): Promise<unknown[]> => {
+      const response: AxiosResponse<unknown[]> = await apiClient.get('/notifications');
       return response.data;
     },
   },
