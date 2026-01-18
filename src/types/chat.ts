@@ -25,6 +25,7 @@ export interface MCPRequest {
     currentImages?: string[];
     userId?: string;
   };
+  provider?: 'openai' | 'gemini';
 }
 
 export interface NotificationMessage {

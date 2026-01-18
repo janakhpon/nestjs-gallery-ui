@@ -24,13 +24,14 @@ export function useMCPChat() {
     },
   });
 
-  const sendMessage = useCallback(async (message: string): Promise<ChatResponse> => {
+  const sendMessage = useCallback(async (message: string, provider?: 'openai' | 'gemini'): Promise<ChatResponse> => {
     try {
       const request: MCPRequest = {
         message,
         context: {
           // Add any context here if needed
         },
+        provider,
       };
 
       const response = await sendMessageMutation.mutateAsync(request);
@@ -40,7 +41,7 @@ export function useMCPChat() {
     }
   }, [sendMessageMutation]);
 
-  const uploadImageViaChat = useCallback(async (file: File, title: string, description: string): Promise<ChatResponse> => {
+  const uploadImageViaChat = useCallback(async (file: File, title: string, description: string, provider?: 'openai' | 'gemini'): Promise<ChatResponse> => {
     try {
       // Create FormData for file upload
       const formData = new FormData();
@@ -52,8 +53,10 @@ export function useMCPChat() {
       const uploadResponse = await api.images.uploadFormData(formData);
 
       // Send a confirmation message to the chat
+      // Send a confirmation message to the chat
       const message = `I've just uploaded an image named "${file.name}" with the title "${title}". Description: "${description}". Please acknowledge this upload.`;
-      const chatResponse = await sendMessage(message);
+
+      const chatResponse = await sendMessage(message, provider);
 
       return {
         ...chatResponse,
@@ -76,7 +79,7 @@ export function useMCPChat() {
       }
 
       const chatErrorMessage = `Failed to upload image: ${errorMessage}`;
-      await sendMessage(chatErrorMessage);
+      await sendMessage(chatErrorMessage, provider);
       throw error;
     }
   }, [sendMessage]);
