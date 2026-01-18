@@ -4,9 +4,17 @@ import React, { useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { ImageGrid } from "@/components/gallery/ImageGrid";
 import { UploadButton } from "@/components/gallery/UploadButton";
-import { ChatBot } from "@/components/chat/ChatBot";
+import dynamic from "next/dynamic";
 import { useNotifications } from "@/hooks/useNotifications";
 import { MessageCircle, Grid3X3 } from "lucide-react";
+
+const ChatBot = dynamic(
+  () => import("@/components/chat/ChatBot").then((mod) => mod.ChatBot),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
 
 export default function GalleryPage() {
   const [showChat, setShowChat] = useState(false);
@@ -25,9 +33,6 @@ export default function GalleryPage() {
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-black rounded-xl flex items-center justify-center shadow-sm hover:scale-105 transition-transform duration-300">
                 <Grid3X3 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-900">
-                Gallery
-              </h1>
             </div>
 
             {/* Controls */}
@@ -56,20 +61,17 @@ export default function GalleryPage() {
               {/* Upload Button */}
               <UploadButton />
 
-              {/* Chat Toggle - Icon on mobile, Button on desktop */}
+              {/* Chat Toggle - Icon only */}
               <button
                 onClick={() => setShowChat(!showChat)}
-                className={`flex items-center justify-center p-2.5 sm:px-5 sm:py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-sm border ${
+                className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 shadow-sm border ${
                   showChat
-                    ? "bg-gray-100 text-gray-900 border-gray-200 hover:bg-gray-200"
+                    ? "bg-black text-white border-transparent hover:bg-gray-800"
                     : "bg-white text-gray-900 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                 }`}
                 aria-label="Toggle Assistant"
               >
-                <MessageCircle className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
-                <span className="hidden sm:inline">
-                  {showChat ? "Close" : "Assistant"}
-                </span>
+                <MessageCircle className="w-5 h-5" />
               </button>
             </div>
           </div>

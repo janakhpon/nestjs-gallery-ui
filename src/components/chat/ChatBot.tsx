@@ -17,6 +17,7 @@ interface ChatBotProps {
 export function ChatBot({ onClose, className }: ChatBotProps) {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [provider, setProvider] = useState<"openai" | "gemini">("openai");
 
   const {
     sendMessage,
@@ -80,9 +81,9 @@ export function ChatBot({ onClose, className }: ChatBotProps) {
           ? `Uploaded via assistant: ${content}`
           : "Uploaded via assistant";
 
-        response = await uploadImageViaChat(file, title, description);
+        response = await uploadImageViaChat(file, title, description, provider);
       } else {
-        response = await sendMessage(content);
+        response = await sendMessage(content, provider);
       }
 
       const assistantMessage: ChatMessageType = {
@@ -117,7 +118,7 @@ export function ChatBot({ onClose, className }: ChatBotProps) {
         "flex flex-col h-full bg-white sm:rounded-2xl overflow-hidden",
         "border-t sm:border border-gray-100",
         "shadow-none sm:shadow-2xl",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -131,7 +132,7 @@ export function ChatBot({ onClose, className }: ChatBotProps) {
             <div
               className={cn(
                 "absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white",
-                isConnected ? "bg-green-500" : "bg-gray-300"
+                isConnected ? "bg-green-500" : "bg-gray-300",
               )}
             />
           </div>
@@ -146,6 +147,31 @@ export function ChatBot({ onClose, className }: ChatBotProps) {
         </div>
 
         <div className="flex items-center space-x-1">
+          <div className="flex bg-gray-100 p-1 rounded-lg mr-2">
+            <button
+              onClick={() => setProvider("openai")}
+              className={cn(
+                "px-2 py-1 text-[10px] font-medium rounded-md transition-all duration-200",
+                provider === "openai"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-500 hover:text-gray-900",
+              )}
+            >
+              OpenAI
+            </button>
+            <button
+              onClick={() => setProvider("gemini")}
+              className={cn(
+                "px-2 py-1 text-[10px] font-medium rounded-md transition-all duration-200",
+                provider === "gemini"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-500 hover:text-gray-900",
+              )}
+            >
+              Gemini
+            </button>
+          </div>
+
           <button
             onClick={clearChat}
             className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-50 rounded-lg transition-colors"
