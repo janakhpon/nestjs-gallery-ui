@@ -1,6 +1,6 @@
 # Gallery UI
 
-A high-performance web interface for the NestJS Gallery API, built with Next.js and Tailwind CSS.
+Web UI for MCP article, built with Next.js.
 
 ## Quick Start
 
@@ -15,3 +15,8 @@ cp env.example .env
 # 3. Development Mode
 npm run dev
 ```
+
+### Resources
+
+- [Read the full article here](https://github.com/janakhpon/mcp-gallery-server/blob/main/README.md)
+- [Read other articles](https://vlog.zinmin.com/)
